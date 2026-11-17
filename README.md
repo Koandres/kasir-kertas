@@ -101,9 +101,12 @@ APP_LOCALE=id
 APP_TIMEZONE=Asia/Jakarta
 DB_CONNECTION=sqlite
 SESSION_DRIVER=database
+SESSION_LIFETIME=480
 ```
 
 Koneksi SQLite di `config/database.php` mengaktifkan **WAL**, `synchronous = NORMAL`, dan `busy_timeout = 5000` agar transaksi tetap aman saat struk dicetak atau dua tab dibuka bersamaan.
+
+`SESSION_LIFETIME=480` berarti sesi bertahan 8 jam tanpa aktivitas, cukup untuk satu shift kasir yang halamannya dibiarkan terbuka. Jika sesi tetap berakhir (misalnya komputer tidur), percobaan transaksi tidak lagi menampilkan "CSRF token mismatch": aplikasi mengarahkan kembali ke halaman masuk atau memuat ulang halaman dengan pesan yang jelas.
 
 ### Mode pengembangan
 
@@ -306,9 +309,9 @@ Ketiganya juga dijalankan otomatis oleh **GitHub Actions** pada setiap push dan 
 
 Akun yang dipakai berperan `kasir`. Masuk memakai akun `admin` atau ubah peran pengguna lewat **Pengaturan → Pengguna**.
 
-### `419 Page Expired`
+### `419 Page Expired` atau "CSRF token mismatch"
 
-Sesi kedaluwarsa atau token CSRF tidak cocok. Muat ulang halaman, lalu masuk kembali. Jika sering terjadi, periksa `SESSION_DRIVER=database` dan pastikan tabel `sessions` ada (`php artisan migrate`).
+Sesi kedaluwarsa atau token CSRF tidak cocok. Sejak penanganan khusus di `bootstrap/app.php`, aplikasi mengarahkan Anda ke halaman masuk (bila sesi sudah habis) atau kembali ke halaman sebelumnya dengan pesan "Token keamanan diperbarui" (bila masih masuk), jadi cukup ulangi transaksi. Bila sering terjadi, periksa `SESSION_DRIVER=database`, pastikan tabel `sessions` ada (`php artisan migrate`), dan sesuaikan `SESSION_LIFETIME` bila perlu.
 
 ### `SQLSTATE[HY000]: no such table: ...`
 
