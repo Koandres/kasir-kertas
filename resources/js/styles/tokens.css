@@ -1,0 +1,231 @@
+/* ==========================================================================
+   Kasir Kertas — Design Tokens
+   Semua warna, font, radius, jarak, dan ukuran huruf dasar ada di sini.
+   Komponen hanya memakai var() dari berkas ini.
+   ========================================================================== */
+
+@font-face {
+    font-family: 'Source Sans 3';
+    src: url('/fonts/sourcesans3-400.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Source Sans 3';
+    src: url('/fonts/sourcesans3-500.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Source Sans 3';
+    src: url('/fonts/sourcesans3-600.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Source Sans 3';
+    src: url('/fonts/sourcesans3-700.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans';
+    src: url('/fonts/ibmplexsans-400.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans';
+    src: url('/fonts/ibmplexsans-500.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans';
+    src: url('/fonts/ibmplexsans-600.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans';
+    src: url('/fonts/ibmplexsans-700.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('/fonts/ibmplexmono-400.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('/fonts/ibmplexmono-500.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('/fonts/ibmplexmono-600.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    /* Warna — tema terang */
+    --bg: #F6F3EC;
+    --surface: #FFFDF8;
+    --surface-2: #EFEBE1;
+    --ink: #1B1B1A;
+    --muted: #6B675E;
+    --line: #DDD7C8;
+    --line-strong: #C4BCAA;
+    --accent: #C8553D;
+    --accent-ink: #FFFFFF;
+    --accent-deep: #A8402D;
+    --accent-soft: #F2DED8;
+    --success: #2F7D4F;
+    --success-soft: #DDEBE2;
+    --warning: #B7791F;
+    --warning-soft: #F4E8D2;
+    --danger: #B3372B;
+    --danger-soft: #F3DDDA;
+    --overlay: rgba(27, 27, 26, 0.42);
+    --focus: #C8553D;
+    --print-ink: #000000;
+    --print-paper: #FFFFFF;
+
+    /* Tipografi */
+    --font-ui: 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
+    --font-num: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+    --text-base: 15px;
+    --text-xs: 11px;
+    --text-sm: 13px;
+    --text-lg: 17px;
+    --text-xl: 22px;
+    --text-2xl: 28px;
+    --text-3xl: 36px;
+
+    /* Bentuk, jarak, gerak */
+    --radius: 4px;
+    --space: 4px;
+    --control: 44px;
+    --receipt-paper: 58mm;
+    --ease: 140ms ease;
+    --ease-out: 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    --serration: 6px;
+
+    /* Kertas: tekstur, bayangan tipis, dan garis bantu */
+    --shadow-paper: 0 1px 0 color-mix(in srgb, var(--ink) 6%, transparent);
+    --shadow-pop: 0 28px 60px -32px color-mix(in srgb, var(--ink) 45%, transparent);
+    --sheen: rgba(255, 255, 255, 0.22);
+    --grain: color-mix(in srgb, var(--ink) 5%, transparent);
+    --grain-strong: color-mix(in srgb, var(--ink) 9%, transparent);
+    --accent-wash: color-mix(in srgb, var(--accent) 8%, var(--surface));
+    --accent-line: color-mix(in srgb, var(--accent) 34%, var(--line));
+
+    color-scheme: light;
+}
+
+[data-font='plex'] {
+    --font-ui: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-accent='zaitun'] {
+    --accent: #5C6B3C;
+    --accent-ink: #FFFFFF;
+    --accent-deep: #48552E;
+    --accent-soft: #E5E8D5;
+    --focus: #5C6B3C;
+}
+
+[data-accent='samudra'] {
+    --accent: #2E6070;
+    --accent-ink: #FFFFFF;
+    --accent-deep: #234C59;
+    --accent-soft: #DAE7EB;
+    --focus: #2E6070;
+}
+
+[data-accent='anggur'] {
+    --accent: #7B3E5C;
+    --accent-ink: #FFFFFF;
+    --accent-deep: #623048;
+    --accent-soft: #EEDDE6;
+    --focus: #7B3E5C;
+}
+
+[data-theme='dark'] {
+    --bg: #1C1B19;
+    --surface: #25241F;
+    --surface-2: #2E2C26;
+    --ink: #EDE9DF;
+    --muted: #A39E91;
+    --line: #3A382F;
+    --line-strong: #504D42;
+    --accent: #E0735A;
+    --accent-ink: #1C1B19;
+    --accent-deep: #C25C45;
+    --accent-soft: #3B2B26;
+    --success: #5BB27A;
+    --success-soft: #25372B;
+    --warning: #D9A441;
+    --warning-soft: #3A3120;
+    --danger: #E0675B;
+    --danger-soft: #3D2724;
+    --overlay: rgba(10, 10, 9, 0.62);
+    --focus: #E0735A;
+    --shadow-paper: 0 1px 0 color-mix(in srgb, #FFFFFF 5%, transparent);
+    --shadow-pop: 0 32px 70px -30px rgba(0, 0, 0, 0.7);
+    --sheen: rgba(255, 255, 255, 0.1);
+    --grain: color-mix(in srgb, var(--ink) 6%, transparent);
+    --grain-strong: color-mix(in srgb, var(--ink) 11%, transparent);
+    --accent-wash: color-mix(in srgb, var(--accent) 10%, var(--surface));
+
+    color-scheme: dark;
+}
+
+[data-theme='dark'][data-accent='zaitun'] {
+    --accent: #A9BC7A;
+    --accent-ink: #1C1B19;
+    --accent-deep: #8FA35F;
+    --accent-soft: #2D3324;
+    --focus: #A9BC7A;
+}
+
+[data-theme='dark'][data-accent='samudra'] {
+    --accent: #7FB6C4;
+    --accent-ink: #1C1B19;
+    --accent-deep: #66A0AF;
+    --accent-soft: #223238;
+    --focus: #7FB6C4;
+}
+
+[data-theme='dark'][data-accent='anggur'] {
+    --accent: #C989A8;
+    --accent-ink: #1C1B19;
+    --accent-deep: #B0708F;
+    --accent-soft: #352630;
+    --focus: #C989A8;
+}
