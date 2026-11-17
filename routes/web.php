@@ -38,6 +38,7 @@ Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/penjualan/{sale}/void', [SaleController::class, 'void'])->name('penjualan.void');
+    Route::post('/penjualan/{sale}/retur', [SaleController::class, 'returnItems'])->name('penjualan.retur');
 
     Route::get('/produk/template', [ProductController::class, 'template'])->name('produk.template');
     Route::post('/produk/impor', [ProductController::class, 'import'])->name('produk.impor');

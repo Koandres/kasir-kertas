@@ -8,20 +8,20 @@ use App\Http\Requests\UpdateAppearanceRequest;
 use App\Http\Requests\UpdateStoreSettingsRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use App\Services\DatabaseBackupService;
 use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SettingController extends Controller
 {
-    public function index(): Response
+    public function index(DatabaseBackupService $backups): Response
     {
-        $database = database_path('database.sqlite');
+        $database = $backups->databasePath();
+        $latest = $backups->latestScheduled();
 
         return Inertia::render('Settings/Index', [
             'store' => Settings::store(),
@@ -48,6 +48,10 @@ class SettingController extends Controller
                 'exists' => file_exists($database),
                 'size' => file_exists($database) ? $this->humanSize(filesize($database)) : '0 KB',
                 'modified' => file_exists($database) ? date('d/m/Y H:i', filemtime($database)) : '-',
+                'keep' => $backups->keep(),
+                'schedule' => config('pos.backup.hour'),
+                'scheduled_count' => count($backups->scheduled()),
+                'latest_scheduled' => $latest ? date('d/m/Y H:i', filemtime($latest)) : null,
             ],
         ]);
     }
@@ -149,79 +153,24 @@ class SettingController extends Controller
         return back()->with('success', 'Pengguna diperbarui.');
     }
 
-    public function backup()
+    public function backup(DatabaseBackupService $backups)
     {
-        $database = database_path('database.sqlite');
-
-        if (! file_exists($database)) {
-            return back()->with('error', 'Berkas database tidak ditemukan.');
-        }
-
         try {
-            DB::statement('PRAGMA wal_checkpoint(TRUNCATE)');
-        } catch (\Throwable) {
-            // WAL mungkin tidak aktif; lanjutkan saja.
+            $path = $backups->create('manual');
+        } catch (\Throwable $exception) {
+            return back()->with('error', 'Backup gagal: '.$exception->getMessage());
         }
 
-        return response()->download(
-            $database,
-            'kasir-kertas-backup-'.now()->format('Ymd-His').'.sqlite',
-            ['Content-Type' => 'application/vnd.sqlite3'],
-        );
+        return response()
+            ->download($path, 'kasir-kertas-backup-'.now()->format('Ymd-His').'.sqlite', [
+                'Content-Type' => 'application/vnd.sqlite3',
+            ])
+            ->deleteFileAfterSend(true);
     }
 
-    public function restore(RestoreBackupRequest $request): RedirectResponse
+    public function restore(RestoreBackupRequest $request, DatabaseBackupService $backups): RedirectResponse
     {
-        $source = $request->file('file')->getRealPath();
-        $database = database_path('database.sqlite');
-
-        try {
-            $pdo = new \PDO('sqlite:'.$source);
-            $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-            $integrity = $pdo->query('PRAGMA integrity_check')->fetchColumn();
-
-            $required = ['users', 'categories', 'products', 'sales', 'sale_items', 'settings', 'sessions'];
-            $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(\PDO::FETCH_COLUMN);
-            $missing = array_diff($required, $tables);
-            $pdo = null;
-        } catch (\Throwable) {
-            throw ValidationException::withMessages(['file' => 'Berkas bukan database SQLite yang valid.']);
-        }
-
-        if (strtolower((string) $integrity) !== 'ok') {
-            throw ValidationException::withMessages(['file' => 'Database gagal pemeriksaan integritas.']);
-        }
-
-        if ($missing !== []) {
-            throw ValidationException::withMessages(['file' => 'Database tidak berasal dari aplikasi Kasir Kertas.']);
-        }
-
-        try {
-            DB::statement('PRAGMA wal_checkpoint(TRUNCATE)');
-        } catch (\Throwable) {
-            // abaikan
-        }
-
-        $safety = storage_path('app/backup-sebelum-restore-'.now()->format('Ymd-His').'.sqlite');
-
-        DB::disconnect();
-
-        if (file_exists($database)) {
-            copy($database, $safety);
-        }
-
-        if (! copy($source, $database)) {
-            DB::reconnect();
-
-            throw ValidationException::withMessages(['file' => 'Berkas gagal disalin ke database.']);
-        }
-
-        @unlink($database.'-wal');
-        @unlink($database.'-shm');
-
-        DB::purge();
-        DB::reconnect();
-        Settings::flush();
+        $backups->restore($request->file('file')->getRealPath());
 
         Auth::logout();
 

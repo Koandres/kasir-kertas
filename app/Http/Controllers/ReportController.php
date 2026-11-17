@@ -64,14 +64,16 @@ class ReportController extends Controller
     protected function summary(): array
     {
         $today = Sale::paid()->whereDate('created_at', today());
-        $total = (int) (clone $today)->sum('total');
+        $total = (int) (clone $today)->selectRaw('COALESCE(SUM(total - returned_total), 0) as net')->first()->net;
         $count = (clone $today)->count();
 
         return [
             'total' => $total,
             'count' => $count,
             'average' => $count > 0 ? (int) round($total / $count) : 0,
-            'cash' => (int) (clone $today)->where('payment_method', 'cash')->sum('total'),
+            'cash' => (int) (clone $today)->where('payment_method', 'cash')
+                ->selectRaw('COALESCE(SUM(total - returned_total), 0) as net')
+                ->first()->net,
         ];
     }
 
@@ -102,7 +104,7 @@ class ReportController extends Controller
 
             $rows = Sale::paid()
                 ->where('created_at', '>=', $start)
-                ->selectRaw("strftime('%Y-%m', created_at) as bucket, SUM(total) as total")
+                ->selectRaw("strftime('%Y-%m', created_at) as bucket, SUM(total - returned_total) as total")
                 ->groupBy('bucket')
                 ->pluck('total', 'bucket');
         } elseif ($period === 'weekly') {
@@ -116,7 +118,7 @@ class ReportController extends Controller
 
             $rows = Sale::paid()
                 ->where('created_at', '>=', $start)
-                ->selectRaw("strftime('%Y-%W', created_at) as bucket, SUM(total) as total")
+                ->selectRaw("strftime('%Y-%W', created_at) as bucket, SUM(total - returned_total) as total")
                 ->groupBy('bucket')
                 ->pluck('total', 'bucket');
         } else {
@@ -130,7 +132,7 @@ class ReportController extends Controller
 
             $rows = Sale::paid()
                 ->where('created_at', '>=', $start)
-                ->selectRaw('date(created_at) as bucket, SUM(total) as total')
+                ->selectRaw('date(created_at) as bucket, SUM(total - returned_total) as total')
                 ->groupBy('bucket')
                 ->pluck('total', 'bucket');
         }
@@ -153,8 +155,9 @@ class ReportController extends Controller
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', 'paid')
             ->where('sales.created_at', '>=', now()->subDays(30))
-            ->selectRaw('sale_items.name, SUM(sale_items.quantity) as quantity, SUM(sale_items.line_total) as revenue')
+            ->selectRaw('sale_items.name, SUM(sale_items.quantity - sale_items.returned_quantity) as quantity, SUM(sale_items.line_total - sale_items.returned_amount) as revenue')
             ->groupBy('sale_items.name')
+            ->havingRaw('SUM(sale_items.quantity - sale_items.returned_quantity) > 0')
             ->orderByDesc('quantity')
             ->limit(8);
     }
@@ -182,7 +185,7 @@ class ReportController extends Controller
 
         return Sale::paid()
             ->whereDate('created_at', today())
-            ->selectRaw('payment_method, COUNT(*) as count, SUM(total) as total')
+            ->selectRaw('payment_method, COUNT(*) as count, SUM(total - returned_total) as total')
             ->groupBy('payment_method')
             ->orderByDesc('total')
             ->get()

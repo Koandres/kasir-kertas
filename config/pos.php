@@ -60,4 +60,20 @@ return [
         'decimal_separator' => ',',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Backup Database
+    |--------------------------------------------------------------------------
+    | Backup memakai VACUUM INTO agar konsisten walau mode WAL sedang aktif.
+    | Berkas terjadwal disimpan di folder ini dan dipangkas sesuai retensi.
+    */
+
+    'backup' => [
+        'database' => env('DB_BACKUP_DATABASE', database_path('database.sqlite')),
+        'directory' => env('DB_BACKUP_DIRECTORY', storage_path('app/backups')),
+        'connection' => env('DB_BACKUP_CONNECTION'),
+        'keep' => (int) env('DB_BACKUP_KEEP', 14),
+        'hour' => env('DB_BACKUP_HOUR', '23:30'),
+    ],
+
 ];

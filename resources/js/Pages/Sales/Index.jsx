@@ -55,7 +55,7 @@ export default function SalesIndex({ sales, filters, summary, cashiers, currency
 
             <div className="stat-strip mb-4 grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                 <div className="stat-cell">
-                    <p className="stat-label">Total lunas (filter)</p>
+                    <p className="stat-label">Pendapatan neto (filter)</p>
                     <p className="stat-value">{money(summary.total)}</p>
                 </div>
                 <div className="stat-cell">
@@ -153,11 +153,21 @@ export default function SalesIndex({ sales, filters, summary, cashiers, currency
                                         <td>{sale.cashier}</td>
                                         <td className="money text-right">{sale.items_count}</td>
                                         <td>{sale.payment_label}</td>
-                                        <td className="money text-right font-semibold">{money(sale.total)}</td>
+                                        <td className="money text-right font-semibold">
+                                            {money(sale.net_total)}
+                                            {sale.has_return ? (
+                                                <span className="block text-[11px] font-normal text-muted line-through">
+                                                    {money(sale.total)}
+                                                </span>
+                                            ) : null}
+                                        </td>
                                         <td>
                                             <span className={`badge ${statusBadge[sale.status] ?? 'badge-neutral'}`}>
                                                 {statusLabel[sale.status] ?? sale.status}
                                             </span>
+                                            {sale.has_return ? (
+                                                <span className="badge badge-warning ml-1">Retur</span>
+                                            ) : null}
                                         </td>
                                     </tr>
                                 ))

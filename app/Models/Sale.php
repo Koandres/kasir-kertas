@@ -10,8 +10,8 @@ class Sale extends Model
 {
     protected $fillable = [
         'number', 'shift_id', 'user_id', 'subtotal', 'item_discount', 'discount',
-        'discount_type', 'discount_value', 'total', 'paid', 'change', 'payment_method',
-        'status', 'void_reason', 'voided_at', 'voided_by',
+        'discount_type', 'discount_value', 'total', 'returned_total', 'paid', 'change',
+        'payment_method', 'status', 'void_reason', 'voided_at', 'voided_by',
     ];
 
     protected function casts(): array
@@ -22,6 +22,7 @@ class Sale extends Model
             'discount' => 'integer',
             'discount_value' => 'integer',
             'total' => 'integer',
+            'returned_total' => 'integer',
             'paid' => 'integer',
             'change' => 'integer',
             'voided_at' => 'datetime',
@@ -46,6 +47,21 @@ class Sale extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(SaleReturn::class);
+    }
+
+    public function hasReturns(): bool
+    {
+        return $this->returned_total > 0;
+    }
+
+    public function netTotal(): int
+    {
+        return max(0, $this->total - $this->returned_total);
     }
 
     public function scopePaid($query)

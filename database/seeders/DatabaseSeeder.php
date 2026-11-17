@@ -100,5 +100,7 @@ class DatabaseSeeder extends Seeder
                 Settings::put($key, $value);
             }
         }
+
+        $this->call(SalesHistorySeeder::class);
     }
 }

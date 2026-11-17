@@ -2,42 +2,57 @@
 
 Aplikasi kasir (point of sale) ringan untuk warung, kafe, dan toko kecil. Satu layar untuk transaksi, satu berkas SQLite untuk seluruh data, dan struk kertas 58 mm atau 80 mm.
 
-Dibangun dengan **Laravel 12**, **Inertia.js v3**, **React 19**, **Tailwind CSS v4**, dan **SQLite**. Seluruh nominal disimpan sebagai bilangan bulat rupiah, tanpa pembulatan tersembunyi.
+Dibangun dengan **Laravel 13**, **Inertia.js v3**, **React 19**, **Tailwind CSS v4**, dan **SQLite**. Seluruh nominal disimpan sebagai bilangan bulat rupiah, tanpa pembulatan tersembunyi.
 
 ---
 
 ## Daftar isi
 
 1. [Fitur](#fitur)
-2. [Kebutuhan sistem](#kebutuhan-sistem)
-3. [Instalasi](#instalasi)
-4. [Akun bawaan](#akun-bawaan)
-5. [Panduan pemakaian](#panduan-pemakaian)
-6. [Pintasan papan ketik](#pintasan-papan-ketik)
-7. [Data, backup, dan restore](#data-backup-dan-restore)
-8. [Pengujian](#pengujian)
-9. [Pemecahan masalah](#pemecahan-masalah)
-10. [Peta folder](#peta-folder)
-11. [Panduan modifikasi](#panduan-modifikasi)
+2. [Tangkapan layar](#tangkapan-layar)
+3. [Kebutuhan sistem](#kebutuhan-sistem)
+4. [Instalasi](#instalasi)
+5. [Akun bawaan](#akun-bawaan)
+6. [Panduan pemakaian](#panduan-pemakaian)
+7. [Pintasan papan ketik](#pintasan-papan-ketik)
+8. [Data, backup, dan restore](#data-backup-dan-restore)
+9. [Pengujian](#pengujian)
+10. [Pemecahan masalah](#pemecahan-masalah)
+11. [Peta folder](#peta-folder)
+12. [Panduan modifikasi](#panduan-modifikasi)
 
 ---
 
 ## Fitur
 
 - **Kasir** — seluruh produk aktif tampil di katalog dengan pencarian dan tab kategori, keranjang bergaya struk, ubah jumlah, diskon per item (nominal/persen) dan diskon nota, kembalian otomatis, pembayaran tunai dan non-tunai, tahan/lanjutkan transaksi (draft), serta keranjang tersimpan di `localStorage`.
-- **Riwayat** — filter tanggal, kasir, metode, status, dan nomor struk; buka struk; void transaksi oleh admin dengan pengembalian stok otomatis.
+- **Riwayat** — filter tanggal, kasir, metode, status, dan nomor struk; buka struk; **retur sebagian per item** oleh admin dengan refund proporsional setelah diskon, pengembalian stok otomatis, dan void transaksi oleh admin.
 - **Shift** — buka shift dengan modal awal, hitung kas diharapkan, tutup shift dengan kas fisik dan selisih yang ditampilkan terbuka.
 - **Produk & kategori** — CRUD produk/jasa, harga jual dan modal, pelacakan stok, batas stok minimum, impor CSV, serta unduh template CSV.
 - **Stok** — penyesuaian masuk/keluar/koreksi, daftar stok menipis, dan riwayat pergerakan stok.
-- **Laporan** — ringkasan hari ini, tren 14 hari (harian/mingguan/bulanan), produk terlaris 30 hari, rekap metode bayar, stok menipis, dan ekspor CSV per bagian.
+- **Laporan** — ringkasan hari ini, tren 14 hari (harian/mingguan/bulanan), produk terlaris 30 hari, rekap metode bayar, stok menipis, dan ekspor CSV per bagian. Pendapatan dihitung **neto setelah retur**, dan harga modal disimpan per item transaksi agar laba kotor tetap akurat saat harga modal berubah.
 - **Pengaturan** — profil toko dan logo, ukuran struk, tema terang/gelap, empat warna aksen, dua pilihan font antarmuka, format mata uang, pengguna dan peran, backup/restore database.
 - **Peran** — `admin` mengelola semuanya; `kasir` bertransaksi dan hanya melihat riwayat serta shift miliknya sendiri.
 
 ---
 
+## Tangkapan layar
+
+| Kasir | Struk |
+| --- | --- |
+| ![Layar kasir dengan katalog produk dan keranjang gaya struk](docs/screenshots/kasir.png) | ![Detail transaksi dengan struk 58 mm](docs/screenshots/struk.png) |
+
+| Laporan | Mode gelap |
+| --- | --- |
+| ![Laporan penjualan dengan tren dan produk terlaris](docs/screenshots/laporan.png) | ![Tampilan mode gelap](docs/screenshots/mode-gelap.png) |
+
+Tangkapan layar dibuat dari data demo 45 hari yang dihasilkan seeder.
+
+---
+
 ## Kebutuhan sistem
 
-- PHP **8.2+** dengan ekstensi `pdo_sqlite`, `mbstring`, `openssl`, `fileinfo`
+- PHP **8.3+** dengan ekstensi `pdo_sqlite`, `mbstring`, `openssl`, `fileinfo`
 - Composer 2
 - Node.js **20+** dan npm
 - SQLite 3 (sudah termasuk di PHP)
@@ -115,7 +130,7 @@ Seeder membuat dua akun:
 
 Nama kasir bawaan adalah **Rina Kasir**. Segera ganti kata sandi melalui menu **Pengaturan → Pengguna** setelah pemakaian pertama.
 
-Seeder juga mengisi 5 kategori, 14 produk/jasa, dan pengaturan toko contoh. Data ini aman dihapus atau diubah.
+Seeder juga mengisi 5 kategori, 14 produk/jasa, pengaturan toko contoh, dan **riwayat penjualan 45 hari** (item, diskon, metode bayar, shift, void, retur, serta pergerakan stok) agar laporan langsung terlihat hidup. Seeder riwayat dilewati otomatis bila database sudah memiliki lebih dari 50 transaksi dalam 45 hari terakhir.
 
 ---
 
@@ -147,11 +162,13 @@ Keranjang disimpan otomatis per pengguna di `localStorage`, jadi tidak hilang sa
 - **Tahan** menyimpan keranjang sebagai draft **tanpa mengurangi stok**.
 - Tombol **Draft** di atas katalog membuka daftar draft. **Lanjutkan** memuat isinya ke keranjang; draft kemudian dihapus. **Hapus** membuang draft.
 
-### 4. Riwayat dan void
+### 4. Riwayat, retur, dan void
 
 Menu **Riwayat** menampilkan transaksi lunas, void, dan draft. Gunakan filter tanggal, kasir, metode, status, atau nomor.
 
 Klik nomor struk untuk membuka detail dan mencetak ulang. **Batalkan (void)** hanya tersedia untuk admin dan wajib disertai alasan. Void mengembalikan stok produk yang terlacak dan mencatat pergerakan stok `void`.
+
+**Retur sebagian** juga khusus admin. Buka detail transaksi → **Retur item**, isi jumlah per baris yang dikembalikan (maksimal sisa yang belum diretur), pilih **metode pengembalian dana** (Tunai/Transfer/QRIS/Kartu), dan tulis alasan. Stok dikembalikan otomatis dengan pergerakan `return`. Refund dihitung proporsional setelah diskon item dan diskon nota, lalu dicatat pada riwayat retur transaksi. Pendapatan di riwayat dan laporan dihitung **neto setelah retur**. Transaksi yang sudah memiliki retur tidak dapat di-void.
 
 ### 5. Produk, kategori, dan stok
 
@@ -177,7 +194,7 @@ Setiap bagian memiliki tombol **CSV** untuk diunduh. Tombol **Ekspor ringkasan**
 - **Profil toko** — nama, alamat, telepon, catatan kaki struk, logo (PNG/JPG/WEBP maks. 2 MB), dan lebar struk 58/80 mm.
 - **Tampilan & uang** — tema terang/gelap, aksen Terakota/Zaitun/Samudra/Anggur, font Source Sans 3/IBM Plex Sans, serta format mata uang (awalan, akhiran, desimal, pemisah).
 - **Pengguna** — tambah/ubah pengguna, peran, dan status aktif. Admin tidak dapat menonaktifkan atau menurunkan perannya sendiri.
-- **Backup & restore** — unduh `database.sqlite`, atau pulihkan dari berkas `.sqlite`. Restore membuat cadangan pengaman di `storage/app/` lebih dulu, lalu mengakhiri semua sesi.
+- **Backup & restore** — unduh database lewat `VACUUM INTO`, lihat jadwal backup otomatis harian, atau pulihkan dari berkas `.sqlite`. Restore membuat cadangan pengaman lebih dulu, lalu mengakhiri semua sesi.
 
 ---
 
@@ -196,21 +213,50 @@ Pintasan `F9` dan `Esc` tetap bekerja saat fokus berada di kolom input.
 
 ## Data, backup, dan restore
 
-Seluruh data berada di **`database/database.sqlite`**.
+Seluruh data berada di **`database/database.sqlite`**. Aplikasi berjalan dengan mode **WAL**, jadi menyalin berkas mentah saat toko sedang bertransaksi berisiko menghasilkan salinan yang tidak lengkap.
+
+### Kenapa `VACUUM INTO`
+
+Backup di aplikasi ini dibuat dengan perintah SQLite `VACUUM INTO`, bukan `copy`. Perintah itu meminta SQLite menulis salinan baru yang konsisten tepat pada satu titik waktu, termasuk saat masih ada transaksi yang menunggu di WAL. Hasilnya satu berkas `.sqlite` yang sudah terintegrasi dan aman dipindahkan.
 
 ### Backup manual
 
-Cara paling aman: hentikan aplikasi, lalu salin `database/database.sqlite` (beserta `-wal` dan `-shm` bila ada) ke tempat lain.
+**Pengaturan → Backup & restore → Unduh file SQLite**.
 
-Cara dari aplikasi: **Pengaturan → Backup & restore → Unduh file SQLite**. Pengunduhan dilakukan saat aplikasi aktif; untuk data yang benar-benar konsisten, hentikan penjualan sebentar.
+Berkas dibuat di folder sementara lalu langsung diunduh, jadi tidak menumpuk di server. Halaman yang sama menampilkan ukuran database, jadwal backup otomatis, jumlah berkas tersimpan, dan waktu backup otomatis terakhir.
+
+### Backup otomatis
+
+Backup terjadwal berjalan **setiap hari pukul 23.30** (zona waktu `Asia/Jakarta`) dan menyimpan **14 berkas terakhir** di `storage/app/backups/` dengan nama `terjadwal-YYYYmmdd-HHMMSS.sqlite`. Berkas lama dipangkas otomatis setiap kali backup baru dibuat.
+
+Jadwal membutuhkan scheduler Laravel yang berjalan terus. Di server Linux/macOS tambahkan satu baris cron:
+
+```cron
+* * * * * cd /path/ke/kasir-kertas && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Di Windows, buat tugas Task Scheduler yang menjalankan `php artisan schedule:work` saat komputer menyala, atau panggil `php artisan db:backup` langsung pada jam yang diinginkan. Untuk menjalankan backup sekali secara manual:
+
+```bash
+php artisan db:backup
+php artisan db:backup --keep=30   # retensi khusus untuk pemanggilan ini
+```
+
+Semua pengaturan tersebut dapat diubah lewat `.env`:
+
+```dotenv
+DB_BACKUP_DIRECTORY=/path/backup/kasir-kertas
+DB_BACKUP_KEEP=14
+DB_BACKUP_HOUR=23:30
+```
 
 ### Restore
 
 1. Buka **Pengaturan → Backup & restore**.
-2. Pilih berkas `.sqlite` hasil unduhan.
+2. Pilih berkas `.sqlite` hasil unduhan atau backup terjadwal.
 3. Klik **Restore sekarang** dan konfirmasi.
 
-Aplikasi mencadangkan database saat ini ke `storage/app/` dengan nama `backup-sebelum-restore-*.sqlite`, mengganti database, menghapus sesi, lalu mengarahkan Anda ke halaman masuk. Masuk kembali memakai akun dari database yang dipulihkan.
+Sebelum mengganti database, aplikasi memvalidasi `PRAGMA integrity_check` dan memastikan tabel inti Kasir Kertas ada. Database yang sedang aktif dicadangkan lebih dulu dengan `VACUUM INTO` ke `storage/app/backups/sebelum-restore-*.sqlite`, baru berkas pilihan Anda dipasang. Setelah itu semua sesi dihapus dan Anda diarahkan ke halaman masuk. Masuk kembali memakai akun dari database yang dipulihkan.
 
 ### Reset data
 
@@ -228,13 +274,29 @@ php artisan migrate:fresh --seed
 php artisan test
 ```
 
-Test mencakup pembayaran, stok tidak cukup, hold/resume draft, void dan pengembalian stok, pembatasan peran, penyalinan nama/harga produk ke item transaksi, serta penolakan pembayaran tunai yang kurang.
+Saat ini ada **24 tes / 156 asersi** yang mencakup:
+
+- pembayaran, diskon per item, stok tidak cukup, dan hold/resume draft,
+- snapshot harga modal pada item transaksi,
+- retur sebagian (refund proporsional, pengembalian stok, khusus admin, penolakan retur berlebih, void diblokir setelah retur),
+- void dan pengembalian stok, serta pembatasan peran,
+- ringkasan/tren/produk terlaris laporan yang memakai pendapatan neto dan ekspor CSV,
+- impor CSV produk (buat, perbarui, kolom diskon, gerakan stok, akses kasir ditolak, kolom wajib),
+- backup `VACUUM INTO` (validitas berkas), retensi perintah `db:backup`, validasi restore, dan unduhan backup manual.
 
 Untuk memeriksa gaya kode PHP:
 
 ```bash
-vendor/bin/pint
+vendor/bin/pint --test
 ```
+
+Untuk memeriksa build frontend:
+
+```bash
+npm run build
+```
+
+Ketiganya juga dijalankan otomatis oleh **GitHub Actions** pada setiap push dan pull request lewat `.github/workflows/ci.yml` (PHP 8.4, Node 24).
 
 ---
 
@@ -288,20 +350,23 @@ Atur `APP_TIMEZONE=Asia/Jakarta` di `.env`, lalu jalankan `php artisan config:cl
 
 ```
 app/
+├── Console/Commands/          # db:backup (VACUUM INTO + retensi)
 ├── Http/
 │   ├── Controllers/          # Auth, Cashier, Product, Category, Stock, Sale, Shift, Report, Setting
 │   ├── Middleware/            # EnsureRole, HandleInertiaRequests
-│   └── Requests/              # Validasi form (15 request)
-├── Models/                    # User, Category, Product, StockMovement, Shift, Sale, SaleItem
-├── Services/SaleService.php   # Transaksi, hold, void, nomor struk, stok
+│   └── Requests/              # Validasi form (16 request)
+├── Models/                    # User, Category, Product, StockMovement, Shift, Sale, SaleItem, SaleReturn, SaleReturnItem
+├── Services/                  # SaleService (transaksi, retur, void, stok), DatabaseBackupService
 └── Support/                   # Settings (key/value), Receipt (payload cetak)
 
-config/pos.php                 # Metode bayar, aksen, font, mata uang, ukuran struk, data toko
+config/pos.php                 # Metode bayar, aksen, font, mata uang, ukuran struk, data toko, backup
 
 database/
 ├── database.sqlite            # Seluruh data aplikasi
-├── migrations/                # 8 migrasi aplikasi + tabel bawaan Laravel
-└── seeders/DatabaseSeeder.php # Akun, katalog, pengaturan contoh
+├── migrations/                # 11 migrasi aplikasi + tabel bawaan Laravel
+└── seeders/                   # DatabaseSeeder (akun, katalog) + SalesHistorySeeder (riwayat 45 hari)
+
+docs/screenshots/              # Tangkapan layar untuk README
 
 resources/
 ├── css/app.css                # Tailwind + kelas komponen (btn, input, panel, tabel)
@@ -322,7 +387,8 @@ public/
 └── uploads/                   # Logo toko
 
 routes/web.php                 # Semua rute + pembatasan peran
-tests/Feature/PosTest.php      # Test alur kasir inti
+routes/console.php             # Jadwal db:backup harian
+tests/Feature/                 # PosTest, ReportTest, ProductImportTest, BackupRestoreTest
 ```
 
 ---

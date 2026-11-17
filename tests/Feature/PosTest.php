@@ -260,3 +260,87 @@ test('baris produk dengan diskon berbeda tidak digabung dan stok dipotong sekali
         ->and($product->fresh()->stock)->toBe(8)
         ->and(StockMovement::where('type', 'sale')->where('quantity', -2)->count())->toBe(1);
 });
+
+test('harga modal produk disalin ke item transaksi', function () {
+    $kasir = posUser();
+    $product = posProduct(['cost_price' => 4000]);
+
+    $this->actingAs($kasir)->postJson('/kasir/bayar', [
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        'payment_method' => 'cash',
+        'paid' => 10000,
+    ])->assertOk();
+
+    $product->update(['cost_price' => 9000]);
+
+    $item = Sale::firstOrFail()->items->first();
+
+    expect($item->cost_price)->toBe(4000);
+});
+
+test('retur sebagian mengembalikan stok, menghitung refund neto, dan menolak void', function () {
+    $kasir = posUser();
+    $admin = posUser('admin');
+    $product = posProduct(['stock' => 10]);
+
+    $this->actingAs($kasir)->postJson('/kasir/bayar', [
+        'items' => [[
+            'product_id' => $product->id,
+            'quantity' => 2,
+            'discount_type' => 'nominal',
+            'discount_value' => 2500,
+        ]],
+        'discount_type' => 'nominal',
+        'discount_value' => 1000,
+        'payment_method' => 'cash',
+        'paid' => 20000,
+    ])->assertOk()->assertJsonPath('sale.sale.total', 16500);
+
+    $sale = Sale::firstOrFail();
+    $item = $sale->items->first();
+
+    expect($product->fresh()->stock)->toBe(8);
+
+    $payload = [
+        'reason' => 'Produk rusak',
+        'refund_method' => 'cash',
+        'items' => [['sale_item_id' => $item->id, 'quantity' => 1]],
+    ];
+
+    $this->actingAs($kasir)
+        ->postJson("/penjualan/{$sale->id}/retur", $payload)
+        ->assertForbidden();
+
+    $this->actingAs($admin)
+        ->post("/penjualan/{$sale->id}/retur", $payload)
+        ->assertRedirect();
+
+    $sale->refresh();
+    $item->refresh();
+
+    // netBase 17.500, total 16.500: setengah baris = 8.250.
+    expect($sale->returned_total)->toBe(8250)
+        ->and($item->returned_quantity)->toBe(1)
+        ->and($item->returned_amount)->toBe(8250)
+        ->and($sale->returns()->count())->toBe(1)
+        ->and($product->fresh()->stock)->toBe(9)
+        ->and(StockMovement::where('type', 'return')->where('quantity', 1)->count())->toBe(1);
+
+    $this->actingAs($admin)
+        ->post("/penjualan/{$sale->id}/retur", $payload)
+        ->assertRedirect();
+
+    expect($sale->fresh()->returned_total)->toBe(16500)
+        ->and($item->fresh()->returned_quantity)->toBe(2)
+        ->and($product->fresh()->stock)->toBe(10);
+
+    $this->actingAs($admin)
+        ->postJson("/penjualan/{$sale->id}/retur", $payload)
+        ->assertStatus(422);
+
+    $this->actingAs($admin)
+        ->post("/penjualan/{$sale->id}/void", ['reason' => 'Salah input'])
+        ->assertSessionHasErrors('sale');
+
+    expect($sale->fresh()->status)->toBe('paid');
+});

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreSaleReturnRequest;
 use App\Http\Requests\VoidSaleRequest;
 use App\Models\Sale;
 use App\Models\User;
@@ -38,7 +39,7 @@ class SaleController extends Controller
             ->when($filters['status'] ?? null, fn ($builder, $value) => $builder->where('status', $value))
             ->when($filters['q'] ?? null, fn ($builder, $value) => $builder->where('number', 'like', "%{$value}%"));
 
-        $summary = (clone $query)->where('status', 'paid')->selectRaw('COALESCE(SUM(total),0) as total, COUNT(*) as count')->first();
+        $summary = (clone $query)->where('status', 'paid')->selectRaw('COALESCE(SUM(total - returned_total),0) as total, COUNT(*) as count')->first();
 
         $sales = $query->latest()->paginate(20)->withQueryString()->through(fn (Sale $sale) => [
             'id' => $sale->id,
@@ -47,6 +48,9 @@ class SaleController extends Controller
             'cashier' => $sale->user?->name,
             'items_count' => $sale->items_count,
             'total' => $sale->total,
+            'returned_total' => $sale->returned_total,
+            'net_total' => $sale->netTotal(),
+            'has_return' => $sale->hasReturns(),
             'payment_method' => $sale->payment_method,
             'payment_label' => config("pos.payment_methods.{$sale->payment_method}.label", $sale->payment_method),
             'status' => $sale->status,
@@ -69,11 +73,21 @@ class SaleController extends Controller
 
         abort_unless($user->isAdmin() || $sale->user_id === $user->id, 403);
 
-        $sale->load(['items', 'user:id,name', 'voidedBy:id,name', 'shift']);
+        $sale->load([
+            'items',
+            'user:id,name',
+            'voidedBy:id,name',
+            'shift',
+            'returns.user:id,name',
+            'returns.items.saleItem:id,name',
+        ]);
+
+        $hasReturns = $sale->returns->isNotEmpty();
 
         return Inertia::render('Sales/Show', [
             'receipt' => Receipt::forSale($sale),
-            'canVoid' => $user->isAdmin() && $sale->status === 'paid',
+            'canVoid' => $user->isAdmin() && $sale->status === 'paid' && ! $hasReturns,
+            'canReturn' => $user->isAdmin() && $sale->status === 'paid',
             'meta' => [
                 'status' => $sale->status,
                 'created_at' => $sale->created_at?->format('d/m/Y H:i'),
@@ -82,8 +96,18 @@ class SaleController extends Controller
                 'voided_at' => $sale->voided_at?->format('d/m/Y H:i'),
                 'voided_by' => $sale->voidedBy?->name,
                 'shift_opened_at' => $sale->shift?->opened_at?->format('d/m/Y H:i'),
+                'has_returns' => $hasReturns,
             ],
         ]);
+    }
+
+    public function returnItems(StoreSaleReturnRequest $request, Sale $sale, SaleService $sales)
+    {
+        $return = $sales->returnItems($sale, $request->user(), $request->validated());
+
+        return redirect()
+            ->route('penjualan.show', $sale)
+            ->with('success', 'Retur dicatat. Dana dikembalikan sebesar Rp '.number_format($return->total, 0, ',', '.').'.');
     }
 
     public function void(VoidSaleRequest $request, Sale $sale, SaleService $sales)

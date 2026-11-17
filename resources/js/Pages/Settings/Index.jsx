@@ -524,7 +524,7 @@ export default function SettingsIndex({
                         <h2 className="text-lg font-semibold">Unduh backup</h2>
                         <p className="mt-1 mb-4 text-sm text-muted">
                             Backup berisi seluruh database SQLite: produk, transaksi, shift, pengguna, dan pengaturan.
-                            Simpan di tempat aman.
+                            Berkas dibuat dengan <span className="money">VACUUM INTO</span> sehingga tetap konsisten saat WAL aktif.
                         </p>
                         <dl className="divide-y divide-line border-y border-line text-sm">
                             <div className="flex justify-between gap-3 py-2">
@@ -539,13 +539,25 @@ export default function SettingsIndex({
                                 <dt className="text-muted">Terakhir diubah</dt>
                                 <dd className="money">{backup.modified}</dd>
                             </div>
+                            <div className="flex justify-between gap-3 py-2">
+                                <dt className="text-muted">Backup otomatis</dt>
+                                <dd className="money">Setiap hari {backup.schedule}</dd>
+                            </div>
+                            <div className="flex justify-between gap-3 py-2">
+                                <dt className="text-muted">Tersimpan</dt>
+                                <dd className="money">{backup.scheduled_count} / {backup.keep} berkas</dd>
+                            </div>
+                            <div className="flex justify-between gap-3 py-2">
+                                <dt className="text-muted">Terakhir otomatis</dt>
+                                <dd className="money">{backup.latest_scheduled ?? 'Belum ada'}</dd>
+                            </div>
                         </dl>
                         <a href="/pengaturan/backup" className="btn btn-primary mt-4">
                             Unduh file SQLite
                         </a>
                         <p className="mt-3 text-xs text-muted">
-                            Backup manual: salin berkas <span className="money">database/database.sqlite</span> saat
-                            aplikasi tidak sedang dipakai.
+                            Backup manual memakai service yang sama dan berkasnya langsung diunduh. Backup otomatis
+                            disimpan di <span className="money">storage/app/backups</span> dengan retensi {backup.keep} berkas terakhir.
                         </p>
                     </section>
 
