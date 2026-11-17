@@ -38,12 +38,12 @@ Dibangun dengan **Laravel 13**, **Inertia.js v3**, **React 19**, **Tailwind CSS 
 
 ## Tangkapan layar
 
-| Kasir | Struk |
-| --- | --- |
+| Kasir                                                                                     | Struk                                                              |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | ![Layar kasir dengan katalog produk dan keranjang gaya struk](docs/screenshots/kasir.png) | ![Detail transaksi dengan struk 58 mm](docs/screenshots/struk.png) |
 
-| Laporan | Mode gelap |
-| --- | --- |
+| Laporan                                                                            | Mode gelap                                              |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | ![Laporan penjualan dengan tren dan produk terlaris](docs/screenshots/laporan.png) | ![Tampilan mode gelap](docs/screenshots/mode-gelap.png) |
 
 Tangkapan layar dibuat dari data demo 45 hari yang dihasilkan seeder.
@@ -123,8 +123,8 @@ Jangan menyalin berkas `public/hot` ke server produksi. Berkas itu hanya dibuat 
 
 Seeder membuat dua akun:
 
-| Peran | Email | Kata sandi |
-| --- | --- | --- |
+| Peran | Email                    | Kata sandi |
+| ----- | ------------------------ | ---------- |
 | Admin | `admin@kasirkertas.test` | `password` |
 | Kasir | `kasir@kasirkertas.test` | `password` |
 
@@ -200,12 +200,12 @@ Setiap bagian memiliki tombol **CSV** untuk diunduh. Tombol **Ekspor ringkasan**
 
 ## Pintasan papan ketik
 
-| Tombol | Fungsi |
-| --- | --- |
-| `/` | Fokus ke kolom pencarian produk |
-| `Enter` | Tambahkan hasil pencarian pertama ke keranjang |
-| `F9` | Buka dialog pembayaran |
-| `Esc` | Tutup dialog/struk, kosongkan pencarian, atau kosongkan keranjang |
+| Tombol  | Fungsi                                                            |
+| ------- | ----------------------------------------------------------------- |
+| `/`     | Fokus ke kolom pencarian produk                                   |
+| `Enter` | Tambahkan hasil pencarian pertama ke keranjang                    |
+| `F9`    | Buka dialog pembayaran                                            |
+| `Esc`   | Tutup dialog/struk, kosongkan pencarian, atau kosongkan keranjang |
 
 Pintasan `F9` dan `Esc` tetap bekerja saat fokus berada di kolom input.
 
@@ -390,18 +390,6 @@ routes/web.php                 # Semua rute + pembatasan peran
 routes/console.php             # Jadwal db:backup harian
 tests/Feature/                 # PosTest, ReportTest, ProductImportTest, BackupRestoreTest
 ```
-
----
-
-## Panduan modifikasi
-
-Panduan langkah demi langkah untuk mengubah warna, font, kategori, produk, format uang, metode bayar, field baru, dan lainnya ada di:
-
-```
-docs/PANDUAN-MODIFIKASI.md
-```
-
-Berkas tersebut bersifat lokal dan tidak ikut di-commit (lihat `.gitignore`).
 
 ---
 
