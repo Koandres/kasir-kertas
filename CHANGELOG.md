@@ -10,6 +10,8 @@ Format satu baris:
 
 ## Selesai
 
+- 2026-11-18 · Berkas: `config/inertia.php` (baru) · Ubah: tentukan eksplisit `inertia.pages.paths` ke `resource_path('js/Pages')` karena default paket memakai `js/pages` (huruf kecil) yang hanya lolos di Windows dan membuat `assertInertia` gagal di CI Linux.
+
 - 2026-11-18 · Berkas: `tests/TestCase.php`, `.github/workflows/ci.yml` · Ubah: matikan Vite di seluruh tes (`withoutVite()`) agar tes tidak bergantung pada `public/build/manifest.json` yang belum ada saat CI menjalankan tes sebelum build (penyebab `GET /laporan` 500), serta naikkan `actions/checkout`/`actions/setup-node` ke v5 dan pin runner `ubuntu-24.04`.
 
 - 2026-11-17 · Berkas: `bootstrap/app.php`, `.env.example`, `.env`, `README.md` · Ubah: tangani `TokenMismatchException` (419) dengan redirect ramah ke login/back + pesan sesi berakhir alih-alih modal "CSRF token mismatch", dan perpanjang `SESSION_LIFETIME` menjadi 8 jam agar halaman kasir yang dibiarkan terbuka sepanjang shift tidak kehilangan sesi.
