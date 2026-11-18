@@ -10,6 +10,8 @@ Format satu baris:
 
 ## Selesai
 
+- 2026-11-18 · Berkas: `tests/TestCase.php`, `.github/workflows/ci.yml` · Ubah: matikan Vite di seluruh tes (`withoutVite()`) agar tes tidak bergantung pada `public/build/manifest.json` yang belum ada saat CI menjalankan tes sebelum build (penyebab `GET /laporan` 500), serta naikkan `actions/checkout`/`actions/setup-node` ke v5 dan pin runner `ubuntu-24.04`.
+
 - 2026-11-17 · Berkas: `bootstrap/app.php`, `.env.example`, `.env`, `README.md` · Ubah: tangani `TokenMismatchException` (419) dengan redirect ramah ke login/back + pesan sesi berakhir alih-alih modal "CSRF token mismatch", dan perpanjang `SESSION_LIFETIME` menjadi 8 jam agar halaman kasir yang dibiarkan terbuka sepanjang shift tidak kehilangan sesi.
 - 2026-11-17 · Berkas: `app/Services/DatabaseBackupService.php` (baru), `app/Console/Commands/BackupDatabase.php` (baru), `app/Http/Controllers/SettingController.php`, `routes/console.php`, `README.md` · Ubah: backup konsisten memakai `VACUUM INTO` (bukan salin berkas mentah saat WAL aktif), perintah `db:backup` terjadwal harian 23.30 dengan retensi 14 berkas, backup manual dan salinan pengaman sebelum restore memakai service yang sama.
 - 2026-11-17 · Berkas: `database/migrations/2026_11_17_000010_add_cost_price_to_sale_items_table.php` (baru), `app/Models/SaleItem.php`, `app/Services/SaleService.php` · Ubah: kolom `cost_price` pada `sale_items` (di-backfill dari harga modal produk saat migrasi), lalu `pay()`/`hold()` menyalin harga modal saat transaksi agar laporan laba kotor tidak terpengaruh perubahan harga modal di kemudian hari.
